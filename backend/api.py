@@ -3,9 +3,11 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
-from flask_migrate import Migrate
+import json
 
-from models import setup_db, Manager, Project, Category
+# Import database and authentication files:
+from .database.models import setup_db, Manager, Project, Category
+from .auth.auth import AuthError, requires_auth
 
 """
 PAGINATION:
@@ -185,6 +187,7 @@ def create_app(test_config=None):
 
     # 6.- DELETE PROJECT
     @app.route("/projects/<int:project_id>", methods=["DELETE"])
+    @requires_auth("delete:project")
     def delete_project(project_id):
         """
         Description: If the user selects the trash can in the app, get the
@@ -211,8 +214,48 @@ def create_app(test_config=None):
         except BaseException:
             abort(422)
 
-    # 7.- ADD NEW PROJECT
+    # 7.- PATCH PROJECT
+    @app.route("/projects/<int:project_id>", methods=["PATCH"])
+    @requires_auth("update:project_info")
+    def patch_project(project_id):
+        """
+        Description: Modify the projects information according to the
+        projects's ID, delivering a successful message indicating which
+        project ID was modified.
+        """
+        # Get the data from the UI
+        user_data = request.get_json()
+        user_name = user_data.get("name")
+        user_manager_id = user_data.get("manager_id")
+        user_country = user_data.get("country")
+        user_city = user_data.get("city")
+        user_address = user_data.get("address")
+        user_category = user_data.get("category")
+        user_description = user_data.get("description")
+
+        try:
+            # Select the project by ID
+            project = Project.query.get_or_404(project_id)
+            if project:
+                project.update()
+                return (
+                    jsonify(
+                        {
+                            "success": True,
+                            "id": project_id,
+                            "message": "Project deleted successfully!",
+                        }
+                    ),
+                    200,
+                )
+            else:
+                abort(404)
+        except BaseException:
+            abort(422)
+
+    # 8.- ADD NEW PROJECT
     @app.route("/projects", methods=["POST"])
+    @requires_auth("create:project")
     def create_project():
         """
         Description: Create a new project from the UI, indicating 'name',
@@ -271,37 +314,6 @@ def create_app(test_config=None):
         else:
             abort(400)
 
-    # AUX.- FILTER QUESTIONS BY CATEGORY
-    # @app.route("/categories/<int:category_id>/questions", methods=["GET"])
-    # def get_questions_by_category(category_id):
-    #     """
-    #     Description: Get the list of questions filtered by category.
-    #     Pagination is abailable. If the category doesn't exists, an error 404
-    #     will be showed.
-    #     """
-    #     # Filter the questions according to the corresponding category
-    #     filtered = Question.query.filter_by(category=category_id).all()
-    #     questions = paginate_questions(request, filtered)
-
-    #     try:
-    #         if len(filtered):
-    #             return (
-    #                 jsonify(
-    #                     {
-    #                         "success": True,
-    #                         "questions": questions,
-    #                         "total_questions": len(filtered),
-    #                         "current_category": category_id,
-    #                     }
-    #                 ),
-    #                 200,
-    #             )
-    #         else:
-    #             abort(404)
-    #     # Unprocessable error
-    #     except BaseException:
-    #         abort(422)
-
     """
     B.- ERROR HANDLERS:
 
@@ -345,6 +357,13 @@ def create_app(test_config=None):
                 }
             ),
             422,
+        )
+
+    @app.errorhandler(AuthError)
+    def auth_error(error):
+        return (
+            jsonify({"success": False, "error": error.status_code, "message": error.error["description"]}),
+            error.status_code,
         )
 
     return app

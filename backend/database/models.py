@@ -1,6 +1,5 @@
 import os
-from typing import ContextManager
-from sqlalchemy import Column, String, Integer, create_engine
+from sqlalchemy import Column, String, Integer
 from flask_sqlalchemy import SQLAlchemy
 import json
 
