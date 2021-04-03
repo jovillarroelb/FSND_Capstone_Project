@@ -1,121 +1,151 @@
+import os
+from typing import ContextManager
+from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
+import json
+
+# Environment variable method to connect to the database
+DB_HOST = os.getenv("DB_HOST", "127.0.0.1:5432")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
+DB_NAME = os.getenv("DB_NAME", "project_app")
+DB_PATH = "postgresql+psycopg2://{}:{}@{}/{}".format(DB_USER, DB_PASSWORD, DB_HOST, DB_NAME)
+
 
 db = SQLAlchemy()
 
+"""
+setup_db(app)
+    binds a flask application and a SQLAlchemy service
+"""
 
-##### MODELS #####
 
-class Venue(db.Model):
-  __tablename__ = 'venues'
+def setup_db(app, database_path=DB_PATH):
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_path
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    db.app = app
+    db.init_app(app)
+    db.create_all()
 
-  id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String)
-  city = db.Column(db.String(120))
-  state = db.Column(db.String(120))
-  address = db.Column(db.String(120))
-  phone = db.Column(db.String(120))
-  image_link = db.Column(db.String(500))
-  website = db.Column(db.String(120))
-  seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
-  seeking_description = db.Column(db.String(120))
-  genres = db.Column(db.ARRAY(db.String), nullable=False)
-  facebook_link = db.Column(db.String(120))
 
-  # Relationships
-  artists = db.relationship('Artist', secondary='shows')
-  shows = db.relationship('Show', backref=('venues'))
+"""
+Managers
+"""
 
-  # Functions
-  def to_dict(self):
 
-      # Returns a dictionary of venues        
-      return {
-          'id': self.id,
-          'name': self.name,
-          'city': self.city,
-          'state': self.state,
-          'address': self.address,
-          'phone': self.phone,
-          'genres': self.genres.split(','),  # convert string to list
-          'image_link': self.image_link,
-          'facebook_link': self.facebook_link,
-          'website': self.website,
-          'seeking_talent': self.seeking_talent,
-          'seeking_description': self.seeking_description,
-      }
+class Manager(db.Model):
+    __tablename__ = "managers"
 
-  def __repr__(self):
-      return f'<Venue {self.id} {self.name}>'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    lastname = db.Column(db.String)
+    phone = db.Column(db.String)
+    email = db.Column(db.String)
 
-class Artist(db.Model):
-  __tablename__ = 'artists'
+    # Relationships:
+    projects = db.relationship("Project", backref=("managers"))
 
-  id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String)
-  city = db.Column(db.String(120))
-  seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
-  state = db.Column(db.String(120))
-  phone = db.Column(db.String(120))
-  website = db.Column(db.String(120))
-  seeking_description = db.Column(db.String(120))
-  image_link = db.Column(db.String(500))
-  genres = db.Column(db.String(120))
-  facebook_link = db.Column(db.String(120))
+    def __init__(self, name, lastname, phone, email):
+        self.name = name
+        self.lastname = lastname
+        self.phone = phone
+        self.email = email
 
-  # Relationships:
-  venues = db.relationship('Venue', secondary='shows')
-  shows = db.relationship('Show', backref=('artists'))
-  
-  # Functions:    
-  def to_dict(self):
-      """ Returns a dictionary of artists """
-      return {
-          'id': self.id,
-          'name': self.name,
-          'city': self.city,
-          'state': self.state,
-          'phone': self.phone,
-          'genres': self.genres.split(','),  # convert string to list
-          'image_link': self.image_link,
-          'facebook_link': self.facebook_link,
-          'website': self.website,
-          'seeking_venue': self.seeking_venue,
-          'seeking_description': self.seeking_description,
-      }
-      
-  def __repr__(self):
-      return f'<Artist {self.id} {self.name}>'
+    def format(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "lastname": self.city,
+            "phone": self.state,
+            "email": self.phone,
+            "projects": self.projects,  # convert string to list
+        }
 
-class Show(db.Model):
-  __tablename__ = 'shows'
+    # def __repr__(self):
+    #     return f"<Manager {self.id} {self.name}>"
 
-  id = db.Column(db.Integer, primary_key=True)
-  artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False) # Child
-  venue_id = db.Column(db.Integer, db.ForeignKey('venues.id'), nullable=False) # Child
-  start_time = db.Column(db.DateTime, nullable=False)
 
-  # Relationships:
-  venue = db.relationship('Venue')
-  artist = db.relationship('Artist')
+"""
+Project
 
-  def show_artist(self):
-      # Returns a dictionary of artists for the show
-      return {
-          'artist_id': self.artist_id,
-          'artist_name': self.artist.name,
-          'artist_image_link': self.artist.image_link,
-          
-          # convert datetime to string
-          'start_time': self.start_time.strftime('%Y-%m-%d %H:%M:%S')
-      }
+"""
 
-  def show_venue(self):
-      # Returns a dictionary of venues for the show
-      return {
-          'venue_id': self.venue_id,
-          'venue_name': self.venue.name,
-          'venue_image_link': self.venue.image_link,
 
-          # convert datetime to string
-          'start_time': self.start_time.strftime('%Y-%m-%d %H:%M:%S')
-      }
+class Project(db.Model):
+    __tablename__ = "projects"
+
+    id = Column(Integer, primary_key=True)
+    manager_id = db.Column(
+        db.Integer,
+        db.ForeignKey("managers.id"),
+        nullable=False,
+    )  # Child
+    name = Column(String)
+    country = Column(String)
+    city = Column(String)
+    address = Column(String)
+    category = Column(String)
+    description = Column(String)
+
+    def __init__(
+        self,
+        name,
+        manager_id,
+        country,
+        city,
+        address,
+        category,
+        description,
+    ):
+        self.name = name
+        self.country = country
+        self.manager_id = manager_id
+        self.city = city
+        self.address = address
+        self.category = category
+        self.description = description
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            "id": self.id,
+            "manager_id": self.manager_id,
+            "name": self.question,
+            "country": self.answer,
+            "city": self.category,
+            "address": self.difficulty,
+            "description": self.description,
+        }
+
+
+"""
+Category: List of categories of projects (1: Residential, 2: Retail, 
+3: Industrial)
+
+"""
+
+
+class Category(db.Model):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True)
+    type = Column(String)
+
+    def __init__(self, type):
+        self.type = type
+
+    def format(self):
+        return {
+            "id": self.id,
+            "type": self.type,
+        }
