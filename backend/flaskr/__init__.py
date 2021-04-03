@@ -271,121 +271,80 @@ def create_app(test_config=None):
         else:
             abort(400)
 
-    # 7.- SEARCH FOR A TERM
-    @app.route("/questions/search", methods=["POST"])
-    def search_question():
-        """
-        Description: Search in the DB for the searchterm typed by the user and
-        returns all the questions that have the word in it.
-        If there's no question including the searchterm provided, a 404 error
-        will be send.
-        """
-        # Get the data from the UI
-        search_data = request.get_json()
-        search_term = search_data.get("searchTerm")
-        search_results = Question.query.filter(Question.question.ilike(f"%{search_term}%")).all()
-        results = paginate_questions(request, search_results)
+    # AUX.- FILTER QUESTIONS BY CATEGORY
+    # @app.route("/categories/<int:category_id>/questions", methods=["GET"])
+    # def get_questions_by_category(category_id):
+    #     """
+    #     Description: Get the list of questions filtered by category.
+    #     Pagination is abailable. If the category doesn't exists, an error 404
+    #     will be showed.
+    #     """
+    #     # Filter the questions according to the corresponding category
+    #     filtered = Question.query.filter_by(category=category_id).all()
+    #     questions = paginate_questions(request, filtered)
 
-        try:
-            if len(results):
-                return (
-                    jsonify(
-                        {
-                            "success": True,
-                            "questions": results,
-                            "total_questions": len(results),
-                            "current_category": None,
-                        }
-                    ),
-                    200,
-                )
-            # There's no result for searchTerm
-            else:
-                abort(404)
-        # Unprocessable error
-        except BaseException:
-            abort(422)
-
-    # 8.- FILTER QUESTIONS BY CATEGORY
-    @app.route("/categories/<int:category_id>/questions", methods=["GET"])
-    def get_questions_by_category(category_id):
-        """
-        Description: Get the list of questions filtered by category.
-        Pagination is abailable. If the category doesn't exists, an error 404
-        will be showed.
-        """
-        # Filter the questions according to the corresponding category
-        filtered = Question.query.filter_by(category=category_id).all()
-        questions = paginate_questions(request, filtered)
-
-        try:
-            if len(filtered):
-                return (
-                    jsonify(
-                        {
-                            "success": True,
-                            "questions": questions,
-                            "total_questions": len(filtered),
-                            "current_category": category_id,
-                        }
-                    ),
-                    200,
-                )
-            else:
-                abort(404)
-        # Unprocessable error
-        except BaseException:
-            abort(422)
-
-    # 9.- PLAY THE GAME - RANDOM QUIZ
-    @app.route("/quizzes", methods=["POST"])
-    def get_quizzes():
-        """
-        Description: Get a random question to ask the user depending on the
-        category (or all categories) and return a succes in JSON format.
-        """
-        data = request.get_json()
-        previous_questions = data.get("previous_questions")
-        quiz_category = data.get("quiz_category")
-        quiz_category_id = int(quiz_category["id"])
-
-        # Excl. all the previous questions
-        questions = Question.query.filter(Question.id.notin_(previous_questions))
-
-        try:
-            # Take the first question from the remaining questions array
-            # of the corresponding category
-            if quiz_category_id:
-                new_question = questions.filter_by(category=quiz_category_id).first().format()
-
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "question": new_question,
-                    }
-                ),
-                200,
-            )
-        except BaseException:
-            abort(422)
+    #     try:
+    #         if len(filtered):
+    #             return (
+    #                 jsonify(
+    #                     {
+    #                         "success": True,
+    #                         "questions": questions,
+    #                         "total_questions": len(filtered),
+    #                         "current_category": category_id,
+    #                     }
+    #                 ),
+    #                 200,
+    #             )
+    #         else:
+    #             abort(404)
+    #     # Unprocessable error
+    #     except BaseException:
+    #         abort(422)
 
     """
     B.- ERROR HANDLERS:
 
     """
-    # 10.- ERROR HANDLERS DEFINITION
+    # 8.- ERROR HANDLERS DEFINITION
 
     @app.errorhandler(400)
     def bad_request(error):
-        return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": 400,
+                    "message": "bad request",
+                }
+            ),
+            400,
+        )
 
     @app.errorhandler(404)
     def not_found(error):
-        return jsonify({"success": False, "error": 404, "message": "resource not found"}), 404
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": 404,
+                    "message": "resource not found",
+                }
+            ),
+            404,
+        )
 
     @app.errorhandler(422)
     def unprocessable(error):
-        return jsonify({"success": False, "error": 422, "message": "unprocessable"}), 422
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": 422,
+                    "message": "unprocessable",
+                }
+            ),
+            422,
+        )
 
     return app
