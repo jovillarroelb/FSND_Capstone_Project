@@ -3,14 +3,11 @@ from sqlalchemy import Column, String, Integer
 from flask_sqlalchemy import SQLAlchemy
 import json
 
-# Migrations
-from flask_migrate import Migrate
-
 # Environment variable method to connect to the database
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1:5432")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-DB_NAME = os.getenv("DB_NAME", "project_app")
+DB_NAME = os.getenv("DB_NAME", "fsnd-jvb")
 DB_PATH = "postgresql+psycopg2://{}:{}@{}/{}".format(DB_USER, DB_PASSWORD, DB_HOST, DB_NAME)
 
 
@@ -25,15 +22,14 @@ setup_db(app)
 def setup_db(app, database_path=DB_PATH):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db.app = app
-    db.init_app(app)
-    db.create_all()
+    # Comment the lines below if the migrations are intended.
 
-    '''
-    Initial Migration
-    '''
-    migrate = Migrate(app, db)
+    # db.app = app
+    # db.init_app(app)
+    # db.create_all()
 
+    return app
+    
 """
 Managers
 """
@@ -91,13 +87,13 @@ class Project(db.Model):
     country = Column(String)
     city = Column(String)
     address = Column(String)
-    category = Column(String)
+    category = Column(Integer)
     description = Column(String)
 
     def __init__(
         self,
-        name,
         manager_id,
+        name,
         country,
         city,
         address,

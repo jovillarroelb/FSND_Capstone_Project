@@ -5,9 +5,12 @@ from flask_cors import CORS
 import random
 import json
 
+# Migrations
+from flask_migrate import Migrate
+
 # Import database and authentication files:
-from .database.models import setup_db, Manager, Project, Category
-from .auth.auth import AuthError, requires_auth
+from database.models import setup_db, Manager, Project, Category
+from auth.auth import AuthError, requires_auth
 
 """
 PAGINATION:
@@ -65,7 +68,13 @@ def create_app(test_config=None):
 
     # create and configure the app
     app = Flask(__name__)
-    setup_db(app)
+    get_app = setup_db(app)
+    db = SQLAlchemy(get_app)
+
+    '''
+    Migration: This is intended to run the migrations the first time!
+    '''
+    migrate = Migrate(app, db)
 
     # 1.- Set up CORS allowing all the origins
     CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -87,7 +96,7 @@ def create_app(test_config=None):
     A.- ENDPOINTS:
 
     """
-    # 3.- GET ALL AVAILABLE CATEGORIES
+    # 3.- GET ALL CATEGORIES
     @app.route("/categories")
     def get_categories():
         """
@@ -113,6 +122,7 @@ def create_app(test_config=None):
                     {
                         "success": True,
                         "categories": category_dictionary,
+                        "categories_total": len(category_dictionary),
                     }
                 ),
                 200,

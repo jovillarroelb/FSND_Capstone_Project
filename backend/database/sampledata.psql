@@ -1,0 +1,15 @@
+-- Categories Creation
+insert into managers (id, type) values (1, 'Residential');
+insert into managers (id, type) values (2, 'Retail');
+insert into managers (id, type) values (3, 'Industrial');
+
+-- Managers Creation
+insert into managers (id, name, lastname, phone, email) values (1, 'Jorge', 'Villarroel', '+1234567890', 'jorge@villarroel.com');
+insert into managers (id, name, lastname, phone, email) values (2, 'Fernando', 'Fernandez', '+1234567890', 'fernando@fernandez.com');
+insert into managers (id, name, lastname, phone, email) values (3, 'Pedro', 'Pereira', '+1234567890', 'pedro@pereira.com');
+
+-- Projects Creation
+insert into projects (id, manager_id, name, country, city, address, category, description) values (1, 1, 'Edificio Nogales', 'Chile', 'Santiago', 'Los Nogales 123, Recoleta', 1, 'Edificio residencial de 7 pisos y 2 subterraneos.');
+insert into projects (id, manager_id, name, country, city, address, category, description) values (2, 3, 'Edificio Costanera', 'Chile', 'Santiago', 'Avenida Providencia 2529, Providencia', 2, 'Torre de 65 pisos con 7 subterraneos.');
+insert into projects (id, manager_id, name, country, city, address, category, description) values (3, 2, 'Mall Parque Arauco', 'Chile', 'Santiago', 'Avenida Kennedy 123, Las Condes', 2, 'Centro comercial de 4 pisos y 4 subterraneos.');
+insert into projects (id, manager_id, name, country, city, address, category, description) values (4, 1, 'Mina El Teniente', 'Chile', 'Rancagua', 'Camino a la Mina 123, Rancagua', 3, 'Mina de cobre CODELCO en la VI region de Chile.');
