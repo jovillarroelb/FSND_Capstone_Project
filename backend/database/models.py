@@ -48,8 +48,8 @@ class Manager(db.Model):
     phone = db.Column(db.String)
     email = db.Column(db.String)
 
-    # Relationships:
-    projects = db.relationship("Project", backref=("managers"))
+    # # Relationships:
+    # projects = db.relationship("Project", backref=("managers"))
 
     def __init__(self, name, lastname, phone, email):
         self.name = name
@@ -64,7 +64,7 @@ class Manager(db.Model):
             "lastname": self.city,
             "phone": self.state,
             "email": self.phone,
-            "projects": self.projects,  # convert string to list
+            # "projects": self.projects,  # convert string to list
         }
 
     # def __repr__(self):
@@ -81,11 +81,12 @@ class Project(db.Model):
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True)
-    manager_id = db.Column(
-        db.Integer,
-        db.ForeignKey("managers.id"),
-        nullable=False,
-    )  # Child
+    # manager_id = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey("managers.id"),
+    #     nullable=False,
+    # )  # Child
+    manager_id = Column(Integer)
     name = Column(String)
     country = Column(String)
     city = Column(String)
