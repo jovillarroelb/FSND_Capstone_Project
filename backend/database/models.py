@@ -3,6 +3,9 @@ from sqlalchemy import Column, String, Integer
 from flask_sqlalchemy import SQLAlchemy
 import json
 
+# Migrations
+from flask_migrate import Migrate
+
 # Environment variable method to connect to the database
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1:5432")
 DB_USER = os.getenv("DB_USER", "postgres")
@@ -26,6 +29,10 @@ def setup_db(app, database_path=DB_PATH):
     db.init_app(app)
     db.create_all()
 
+    '''
+    Initial Migration
+    '''
+    migrate = Migrate(app, db)
 
 """
 Managers
